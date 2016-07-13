@@ -1,5 +1,7 @@
 <Alloy>
 	<Window class="container" layout="vertical">
-		<Button onClick="conex">Busca Tweets</Button>
+		<Button onClick="conex">Registra cajón</Button>
+		<Button onClick="ubi">Ubicame</Button>
+		<View id="view_map" ></View>
 	</Window>
 </Alloy>

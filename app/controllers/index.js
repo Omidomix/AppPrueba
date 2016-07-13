@@ -1,23 +1,89 @@
-function conex(e) {
-	var xhr = Ti.Network.createHTTPClient();
-	xhr.timeout = 1000000;
+var Map = require('ti.map');
+var ubicacion;
+var mapview;
 
-	xhr.open("GET", "https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=jhozeomar");
-	xhr.setRequestHeader("Authorization",' OAuth oauth_consumer_key="DC0sePOBbQ8bYdC8r4Smg",oauth_signature_method="HMAC-SHA1",oauth_timestamp="1468172322",oauth_nonce="2910112325",oauth_version="1.0",oauth_token="357588214-2vTUZeUMgyMrI2JWPLEaqfl8spqVutdUAzqhLb5J",oauth_signature="eNTqfBnK2bQAAj%2FhSlnKP7mdJaM%3D"');
+if (Ti.Geolocation.locationServicesEnabled) {
+	Ti.Geolocation.accuracy = Ti.Geolocation.ACCURACY_BEST;
+	Ti.Geolocation.preferredProvider = Ti.Geolocation.PROVIDER_GPS;
+	Titanium.Geolocation.getCurrentPosition(function(e) {
+		if (e.error) {
+			Ti.API.error('Error: ' + e.error);
+		} else {
 
-	xhr.onload = function() {
-		var tweets = JSON.parse(this.responseText);
-		console.log("******" +tweets);
-		for (var c = 0; c < tweets.length; c++) {
+			ubicacion = Map.createAnnotation({
+				latitude : e.coords.latitude,
+				longitude : e.coords.longitude,
+				title : "Estas Aqui",
+				pincolor : Map.ANNOTATION_RED,
+				myid : 1, // Custom property to uniquely identify this annotation.
+				draggable : true
+			});
 
-			var tweet = tweets[c].text;
-			var user = tweets[c].user.screen_name;
+			mapview = Map.createView({
+				mapType : Map.SATELLITE_TYPE,
+				region : {
+					latitude : e.coords.latitude,
+					longitude : e.coords.longitude,
+					zoom : 20
+				},
+				animate : true,
+				regionFit : true,
+				userLocation : false,
+				annotations : [ubicacion]
+			});
 
-			alert("Tweet: " + tweet + " Usuario: " + user);
+			$.view_map.add(mapview);
+
 		}
-	};
+	});
+} else {
+	alert('Please enable location services');
+}
 
-	xhr.send();
+function conex(e) {
+	var latitud = ubicacion.getLatitude();
+	var longitud = ubicacion.getLongitude();
+	alert('latitud = ' + latitud + " longitud: " + longitud);
+
+	var url = "http://www.myhostingprj.esy.es/APIMapeo/index.php/Mapeo";
+	var xhr = Ti.Network.createHTTPClient();
+	xhr.setTimeout(15000);
+	xhr.onload = function(e) {
+		alert(this.responseText);
+	};
+	xhr.onerror = function(e) {
+		alert("Fallo la conexion");
+	};
+	xhr.open('POST', url);
+	var jsonPush = {
+		latitud : latitud,
+		longitud : longitud
+	};
+	xhr.send(jsonPush);
+
+}
+
+function ubi() {
+	if (Ti.Geolocation.locationServicesEnabled) {
+		Ti.Geolocation.accuracy = Ti.Geolocation.ACCURACY_BEST;
+		Ti.Geolocation.preferredProvider = Ti.Geolocation.PROVIDER_GPS;
+		Titanium.Geolocation.getCurrentPosition(function(e) {
+			if (e.error) {
+				Ti.API.error('Error: ' + e.error);
+			} else {
+				ubicacion = Map.createAnnotation({
+					latitude : e.coords.latitude,
+					longitude : e.coords.longitude,
+					title : "Estas Aqui",
+					pincolor : Map.ANNOTATION_RED,
+					myid : 1,
+					draggable : true
+				});
+				mapview.removeAllAnnotations();
+				mapview.addAnnotation(ubicacion);
+			}
+		});
+	}
 }
 
 $.index.open();
